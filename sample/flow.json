@@ -1,0 +1,257 @@
+{
+    "arn": "arn:aws:bedrock:us-east-1:034034141479:flow/HSVH8IWSKQ",
+    "createdAt": "2025-08-01T13:57:52.279825+00:00",
+    "definition": {
+        "connections": [
+            {
+                "configuration": {
+                    "data": {
+                        "sourceOutput": "document",
+                        "targetInput": "input_text"
+                    }
+                },
+                "name": "StartToInitial",
+                "source": "StartNode",
+                "target": "InitialPrompt",
+                "type": "Data"
+            },
+            {
+                "configuration": {
+                    "data": {
+                        "sourceOutput": "modelCompletion",
+                        "targetInput": "input"
+                    }
+                },
+                "name": "InitialToProcessor",
+                "source": "InitialPrompt",
+                "target": "ProcessorLambda",
+                "type": "Data"
+            },
+            {
+                "configuration": {
+                    "data": {
+                        "sourceOutput": "functionResponse",
+                        "targetInput": "processed_data"
+                    }
+                },
+                "name": "ProcessorToValidation",
+                "source": "ProcessorLambda",
+                "target": "ValidationPrompt",
+                "type": "Data"
+            },
+            {
+                "configuration": {
+                    "data": {
+                        "sourceOutput": "modelCompletion",
+                        "targetInput": "input"
+                    }
+                },
+                "name": "ValidationToValidator",
+                "source": "ValidationPrompt",
+                "target": "ValidatorLambda",
+                "type": "Data"
+            },
+            {
+                "configuration": {
+                    "data": {
+                        "sourceOutput": "functionResponse",
+                        "targetInput": "final_data"
+                    }
+                },
+                "name": "ValidatorToFinal",
+                "source": "ValidatorLambda",
+                "target": "FinalPrompt",
+                "type": "Data"
+            },
+            {
+                "configuration": {
+                    "data": {
+                        "sourceOutput": "modelCompletion",
+                        "targetInput": "document"
+                    }
+                },
+                "name": "FinalToEnd",
+                "source": "FinalPrompt",
+                "target": "EndNode",
+                "type": "Data"
+            }
+        ],
+        "nodes": [
+            {
+                "configuration": {
+                    "output": {}
+                },
+                "inputs": [
+                    {
+                        "expression": "$.data",
+                        "name": "document",
+                        "type": "String"
+                    }
+                ],
+                "name": "EndNode",
+                "type": "Output"
+            },
+            {
+                "configuration": {
+                    "prompt": {
+                        "sourceConfiguration": {
+                            "inline": {
+                                "modelId": "amazon.nova-lite-v1:0",
+                                "templateConfiguration": {
+                                    "text": {
+                                        "text": "Generate the final response based on validated data: {{final_data}}"
+                                    }
+                                },
+                                "templateType": "TEXT"
+                            }
+                        }
+                    }
+                },
+                "inputs": [
+                    {
+                        "expression": "$.data.body.validationScore",
+                        "name": "final_data",
+                        "type": "Number"
+                    }
+                ],
+                "name": "FinalPrompt",
+                "outputs": [
+                    {
+                        "name": "modelCompletion",
+                        "type": "String"
+                    }
+                ],
+                "type": "Prompt"
+            },
+            {
+                "configuration": {
+                    "prompt": {
+                        "sourceConfiguration": {
+                            "inline": {
+                                "modelId": "amazon.nova-lite-v1:0",
+                                "templateConfiguration": {
+                                    "text": {
+                                        "text": "Analyze the following input and extract key information: {{input_text}}"
+                                    }
+                                },
+                                "templateType": "TEXT"
+                            }
+                        }
+                    }
+                },
+                "inputs": [
+                    {
+                        "expression": "$.data",
+                        "name": "input_text",
+                        "type": "String"
+                    }
+                ],
+                "name": "InitialPrompt",
+                "outputs": [
+                    {
+                        "name": "modelCompletion",
+                        "type": "String"
+                    }
+                ],
+                "type": "Prompt"
+            },
+            {
+                "configuration": {
+                    "lambdaFunction": {
+                        "lambdaArn": "arn:aws:lambda:us-east-1:034034141479:function:pragma-genai-flow-dev-processor"
+                    }
+                },
+                "inputs": [
+                    {
+                        "expression": "$.data",
+                        "name": "input",
+                        "type": "String"
+                    }
+                ],
+                "name": "ProcessorLambda",
+                "outputs": [
+                    {
+                        "name": "functionResponse",
+                        "type": "Object"
+                    }
+                ],
+                "type": "LambdaFunction"
+            },
+            {
+                "configuration": {
+                    "input": {}
+                },
+                "name": "StartNode",
+                "outputs": [
+                    {
+                        "name": "document",
+                        "type": "String"
+                    }
+                ],
+                "type": "Input"
+            },
+            {
+                "configuration": {
+                    "prompt": {
+                        "sourceConfiguration": {
+                            "inline": {
+                                "modelId": "amazon.nova-lite-v1:0",
+                                "templateConfiguration": {
+                                    "text": {
+                                        "text": "Validate and enhance the processed data: {{processed_data}}"
+                                    }
+                                },
+                                "templateType": "TEXT"
+                            }
+                        }
+                    }
+                },
+                "inputs": [
+                    {
+                        "expression": "$.data.body.processingId",
+                        "name": "processed_data",
+                        "type": "String"
+                    }
+                ],
+                "name": "ValidationPrompt",
+                "outputs": [
+                    {
+                        "name": "modelCompletion",
+                        "type": "String"
+                    }
+                ],
+                "type": "Prompt"
+            },
+            {
+                "configuration": {
+                    "lambdaFunction": {
+                        "lambdaArn": "arn:aws:lambda:us-east-1:034034141479:function:pragma-genai-flow-dev-validator"
+                    }
+                },
+                "inputs": [
+                    {
+                        "expression": "$.data",
+                        "name": "input",
+                        "type": "String"
+                    }
+                ],
+                "name": "ValidatorLambda",
+                "outputs": [
+                    {
+                        "name": "functionResponse",
+                        "type": "Object"
+                    }
+                ],
+                "type": "LambdaFunction"
+            }
+        ]
+    },
+    "description": "Sample GenAI processing flow with 2 lambdas and 3 prompts",
+    "executionRoleArn": "arn:aws:iam::034034141479:role/pragma-genai-flow-dev-bedrock-flow-role",
+    "id": "HSVH8IWSKQ",
+    "name": "pragma-genai-flow-dev-flow",
+    "status": "Prepared",
+    "updatedAt": "2025-08-01T13:57:52.279825+00:00",
+    "validations": [],
+    "version": "DRAFT"
+}

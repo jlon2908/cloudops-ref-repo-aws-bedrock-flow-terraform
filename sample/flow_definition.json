@@ -1,0 +1,144 @@
+{
+    "definition": {
+        "connections": [
+            {
+                "configuration": {
+                    "data": {
+                        "sourceOutput": "document",
+                        "targetInput": "topic"
+                    }
+                },
+                "name": "FlowInputNodeFlowInputNode0ToPrompt_1PromptsNode0",
+                "source": "FlowInputNode",
+                "target": "Prompt_1",
+                "type": "Data"
+            },
+            {
+                "configuration": {
+                    "data": {
+                        "sourceOutput": "modelCompletion",
+                        "targetInput": "codeHookInput"
+                    }
+                },
+                "name": "Prompt_1PromptsNode0ToLambdaFunctionNode_1LambdaFunctionNode0",
+                "source": "Prompt_1",
+                "target": "LambdaFunctionNode_1",
+                "type": "Data"
+            },
+            {
+                "configuration": {
+                    "data": {
+                        "sourceOutput": "functionResponse",
+                        "targetInput": "document"
+                    }
+                },
+                "name": "LambdaFunctionNode_1LambdaFunctionNode0ToFlowOutputNodeFlowOutputNode0",
+                "source": "LambdaFunctionNode_1",
+                "target": "FlowOutputNode",
+                "type": "Data"
+            }
+        ],
+        "nodes": [
+            {
+                "configuration": {
+                    "input": {}
+                },
+                "name": "FlowInputNode",
+                "outputs": [
+                    {
+                        "name": "document",
+                        "type": "String"
+                    }
+                ],
+                "type": "Input"
+            },
+            {
+                "configuration": {
+                    "prompt": {
+                        "sourceConfiguration": {
+                            "inline": {
+                                "inferenceConfiguration": {
+                                    "text": {
+                                        "maxTokens": 512,
+                                        "stopSequences": [],
+                                        "temperature": 0.699999988079071,
+                                        "topP": 0.8999999761581421
+                                    }
+                                },
+                                "modelId": "amazon.nova-lite-v1:0",
+                                "templateConfiguration": {
+                                    "text": {
+                                        "inputVariables": [
+                                            {
+                                                "name": "topic"
+                                            }
+                                        ],
+                                        "text": "Write a paragraph about {{topic}}."
+                                    }
+                                },
+                                "templateType": "TEXT"
+                            }
+                        }
+                    }
+                },
+                "inputs": [
+                    {
+                        "expression": "$.data",
+                        "name": "topic",
+                        "type": "String"
+                    }
+                ],
+                "name": "Prompt_1",
+                "outputs": [
+                    {
+                        "name": "modelCompletion",
+                        "type": "String"
+                    }
+                ],
+                "type": "Prompt"
+            },
+            {
+                "configuration": {
+                    "output": {}
+                },
+                "inputs": [
+                    {
+                        "expression": "$.data.body.processingId",
+                        "name": "document",
+                        "type": "String"
+                    }
+                ],
+                "name": "FlowOutputNode",
+                "type": "Output"
+            },
+            {
+                "configuration": {
+                    "lambdaFunction": {
+                        "lambdaArn": "arn:aws:lambda:us-east-1:034034141479:function:pragma-genai-flow-dev-processor:$LATEST"
+                    }
+                },
+                "inputs": [
+                    {
+                        "expression": "$.data",
+                        "name": "codeHookInput",
+                        "type": "String"
+                    }
+                ],
+                "name": "LambdaFunctionNode_1",
+                "outputs": [
+                    {
+                        "name": "functionResponse",
+                        "type": "Object"
+                    }
+                ],
+                "type": "LambdaFunction"
+            }
+        ]
+    },
+    "description": "desc",
+    "executionRoleArn": "arn:aws:iam::034034141479:role/pragma-genai-flow-dev-bedrock-flow-role",
+    "name": "TEST",
+    "tags": {
+        "KeyName": ""
+    }
+}

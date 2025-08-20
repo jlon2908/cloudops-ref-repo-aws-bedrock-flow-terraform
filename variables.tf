@@ -1,0 +1,141 @@
+# AWS Bedrock Agent Flow Module - Variables
+variable "profile" {
+  description = "AWS profile to use"
+  type        = string
+  default     = "default"
+}
+
+variable "client" {
+  description = "Client name for resource naming and tagging"
+  type        = string
+}
+
+variable "project" {
+  description = "Project name for resource naming and tagging"
+  type        = string
+}
+
+variable "environment" {
+  description = "Environment name for resource naming and tagging"
+  type        = string
+  validation {
+    condition     = contains(["dev", "qa", "pdn"], var.environment)
+    error_message = "Environment must be one of: dev, qa, pdn."
+  }
+}
+
+variable "flow_description" {
+  description = "Description of the Bedrock Agent Flow"
+  type        = string
+  default     = "Bedrock Agent Flow for processing requests"
+}
+
+variable "execution_role_arn" {
+  description = "ARN of the IAM role for flow execution"
+  type        = string
+}
+
+variable "kms_key_arn" {
+  description = "ARN of the KMS key for encryption"
+  type        = string
+  default     = null
+}
+
+variable "flow_nodes" {
+  description = "Dynamic flow nodes configuration"
+  type = map(object({
+    type = string # "Input", "Output", "Prompt", "LambdaFunction"
+
+    # For Prompt nodes
+    template      = optional(string)
+    template_file = optional(string)
+    model_id      = optional(string)
+    max_tokens    = optional(number, 1000)
+    temperature   = optional(number, 0.7)
+    top_p         = optional(number, 0.9)
+
+    # For Lambda nodes
+    lambda_arn = optional(string)
+
+    # Common properties
+    output_name = optional(string, "output")
+    output_type = optional(string, "String")
+
+    # Multiple inputs support
+    inputs = optional(list(object({
+      name       = string
+      type       = string
+      expression = string
+    })), [])
+  }))
+
+  validation {
+    condition = alltrue([
+      for k, v in var.flow_nodes : contains(["Input", "Output", "Prompt", "LambdaFunction", "Collector"], v.type)
+    ])
+    error_message = "Node type must be one of: Input, Output, Prompt, LambdaFunction, Collector"
+  }
+}
+
+variable "flow_connections" {
+  description = "Flow connections between nodes (required)"
+  type = list(object({
+    name          = string
+    source        = string
+    target        = string
+    source_output = string
+    target_input  = string
+  }))
+}
+
+variable "additional_tags" {
+  description = "Additional tags to apply to resources"
+  type        = map(string)
+  default     = {}
+}
+
+variable "create_flow_version" {
+  description = "Whether to create a flow version"
+  type        = bool
+  default     = false
+}
+
+variable "flow_version_description" {
+  description = "Description for the flow version"
+  type        = string
+  default     = "Flow version"
+}
+
+variable "create_flow_alias" {
+  description = "Whether to create a flow alias"
+  type        = bool
+  default     = false
+}
+
+variable "flow_alias_name" {
+  description = "Name for the flow alias"
+  type        = string
+  default     = "live"
+}
+
+variable "flow_alias_description" {
+  description = "Description for the flow alias"
+  type        = string
+  default     = "Flow alias"
+}
+
+variable "prepare_flow" {
+  description = "Whether to prepare the flow using AWS CLI"
+  type        = bool
+  default     = false
+}
+
+variable "aws_role_arn" {
+  description = "AWS role ARN for cli execution"
+  type        = string
+}
+
+variable "aws_region" {
+  description = "AWS region for cli execution"
+  type        = string
+} 
