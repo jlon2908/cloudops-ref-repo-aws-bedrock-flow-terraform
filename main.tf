@@ -180,6 +180,7 @@ resource "aws_bedrockagent_flow" "main" {
 resource "null_resource" "flow_prepare" {
 
   provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
     command = <<EOF
 
       if [ -z "${var.aws_role_arn}" ]; then
