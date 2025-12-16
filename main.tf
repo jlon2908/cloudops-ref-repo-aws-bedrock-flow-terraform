@@ -86,6 +86,21 @@ resource "aws_bedrockagent_flow" "main" {
           }
         }
 
+        dynamic "configuration" {
+          for_each = node.value.type == "Condition" ? [1] : []
+          content {
+            condition {
+              dynamic "condition" {
+                for_each = node.value.conditions
+                content {
+                  name       = condition.value.name
+                  expression = condition.value.expression
+                }
+              }
+            }
+          }
+        }
+
         # Dynamic Inputs - Use inputs list for all nodes
         dynamic "input" {
           for_each = length(node.value.inputs) > 0 ? node.value.inputs : (
@@ -105,6 +120,10 @@ resource "aws_bedrockagent_flow" "main" {
               name       = "document"
               type       = "String"
               expression = "$.data"
+              }] : node.value.type == "Condition" ? [{
+              name       = "input"
+              type       = "String"
+              expression = "$.data"
             }] : []
           )
           content {
@@ -116,11 +135,13 @@ resource "aws_bedrockagent_flow" "main" {
 
         # Dynamic Outputs
         dynamic "output" {
-          for_each = contains(["Input", "Prompt", "LambdaFunction", "Collector"], node.value.type) ? [1] : []
+          for_each = contains(["Input", "Prompt", "LambdaFunction", "Collector", "Condition"], node.value.type) ? [1] : []
           content {
             name = node.value.type == "Input" ? "document" : (
               node.value.type == "Prompt" ? "modelCompletion" : (
-                node.value.type == "Collector" ? "document" : "functionResponse"
+                node.value.type == "Collector" ? "document" : (
+                  node.value.type == "Condition" ? "output" : "functionResponse"
+                )
               )
             )
             type = coalesce(node.value.output_type, "String")
