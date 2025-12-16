@@ -179,11 +179,6 @@ resource "aws_bedrockagent_flow" "main" {
 
 resource "null_resource" "flow_prepare" {
 
-
-  provisioner "local-exec" {
-    command = "aws bedrock-agent prepare-flow --flow-identifier ${aws_bedrockagent_flow.main.id} --profile ${var.profile}"
-  }
-
   provisioner "local-exec" {
     command = <<EOF
 
