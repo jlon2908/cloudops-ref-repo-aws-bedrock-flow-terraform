@@ -57,6 +57,12 @@ variable "flow_nodes" {
     # For Lambda nodes
     lambda_arn = optional(string)
 
+    # For Condition nodes
+    conditions = optional(list(object({
+      name       = string
+      expression = string
+    })), [])
+
     # Common properties
     output_name = optional(string, "output")
     output_type = optional(string, "String")
@@ -71,9 +77,9 @@ variable "flow_nodes" {
 
   validation {
     condition = alltrue([
-      for k, v in var.flow_nodes : contains(["Input", "Output", "Prompt", "LambdaFunction", "Collector"], v.type)
+      for k, v in var.flow_nodes : contains(["Input", "Output", "Prompt", "LambdaFunction", "Collector", "Condition"], v.type)
     ])
-    error_message = "Node type must be one of: Input, Output, Prompt, LambdaFunction, Collector"
+    error_message = "Node type must be one of: Input, Output, Prompt, LambdaFunction, Collector, Condition"
   }
 }
 
