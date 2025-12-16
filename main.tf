@@ -190,19 +190,22 @@ resource "null_resource" "flow_prepare" {
           echo "aws_role is empty, using profile AWS_PROFILE"
           aws bedrock-agent prepare-flow --flow-identifier ${aws_bedrockagent_flow.main.id}
       else
-          echo "aws_role is set to '$aws_role'"
-          set -e
-          CREDENTIALS=(`aws sts assume-role \
-          --role-arn ${var.aws_role_arn} \
-          --role-session-name "bedrock-cli" \
-          --query "[Credentials.AccessKeyId,Credentials.SecretAccessKey,Credentials.SessionToken]" \
-          --output text`)
+          echo "Deploy Role: ${var.aws_role_arn}"
 
-          unset AWS_PROFILE
-          export AWS_DEFAULT_REGION=${var.aws_region}
-          export AWS_ACCESS_KEY_ID="$${CREDENTIALS[0]}"
-          export AWS_SECRET_ACCESS_KEY="$${CREDENTIALS[1]}"
-          export AWS_SESSION_TOKEN="$${CREDENTIALS[2]}"
+          # Assume role to execute script in the target account
+          TEMP_CREDS=$(aws sts assume-role --role-arn "${var.aws_role_arn}" --role-session-name "TerraformExecuteCMD" --output json)
+        
+          if [ $? -ne 0 ]; then
+            echo "Error al asumir el rol ${var.aws_role_arn}"
+            exit 1
+          fi
+          
+          # Export temporary credentials
+          export AWS_ACCESS_KEY_ID=$(echo $TEMP_CREDS | jq -r '.Credentials.AccessKeyId')
+          export AWS_SECRET_ACCESS_KEY=$(echo $TEMP_CREDS | jq -r '.Credentials.SecretAccessKey')
+          export AWS_SESSION_TOKEN=$(echo $TEMP_CREDS | jq -r '.Credentials.SessionToken')
+          
+          echo "Credentials exported"
 
           aws bedrock-agent prepare-flow --flow-identifier ${aws_bedrockagent_flow.main.id}
       fi
