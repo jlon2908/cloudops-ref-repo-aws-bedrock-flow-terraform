@@ -94,7 +94,7 @@ resource "aws_bedrockagent_flow" "main" {
                 for_each = node.value.conditions
                 content {
                   name       = condition.value.name
-                  expression = condition.value.expression
+                  expression = try(condition.value.expression, null)
                 }
               }
             }
