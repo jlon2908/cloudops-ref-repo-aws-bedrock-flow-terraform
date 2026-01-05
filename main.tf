@@ -135,18 +135,11 @@ resource "aws_bedrockagent_flow" "main" {
 
         # Dynamic Outputs
         dynamic "output" {
-          for_each = node.value.type == "Condition" ? concat(
-            [for cond in node.value.conditions : cond.name],
-            ["default"]
-            ) : (
-            contains(["Input", "Prompt", "LambdaFunction", "Collector"], node.value.type) ? [1] : []
-          )
+          for_each = contains(["Input", "Prompt", "LambdaFunction", "Collector"], node.value.type) ? [1] : []
           content {
-            name = node.value.type == "Condition" ? output.value : (
-              node.value.type == "Input" ? "document" : (
-                node.value.type == "Prompt" ? "modelCompletion" : (
-                  node.value.type == "Collector" ? "document" : "functionResponse"
-                )
+            name = node.value.type == "Input" ? "document" : (
+              node.value.type == "Prompt" ? "modelCompletion" : (
+                node.value.type == "Collector" ? "document" : "functionResponse"
               )
             )
             type = coalesce(node.value.output_type, "String")
